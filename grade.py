@@ -1,5 +1,6 @@
 import os
-import subprocess
+from subprocess import run, Popen, PIPE
+
 
 def remove_main(file_path):
     try:
@@ -10,25 +11,32 @@ def remove_main(file_path):
 
 def compile_and_run_java(java_file):
     # Compile the Java file
-    subprocess.run(['javac', java_file])
+    run(['javac', java_file])
 
     # Get the class name by removing the file extension
-    # class_name = java_file.split("")[0]
-    class_name = java_file
+    class_name = java_file.rsplit('.', 1)[0]
 
     # Run the Java program and pass input
-    process = subprocess.Popen(
+    process = Popen(
         ['java', class_name], 
-        stdin=subprocess.PIPE, 
-        stdout=subprocess.PIPE, 
-        stderr=subprocess.PIPE, 
+        stdin=PIPE, 
+        stdout=PIPE, 
+        stderr=PIPE, 
         text=True)
     inputs = "John Doe\nIce Cream\nBlue\nNew York\nDog\nButterflies\nElder Holland"
-    stdout, stderr = process.communicate(input=inputs)
+
+
+    try:
+        stdout, stderr = process.communicate(inputs)
+        stderr = stderr.strip() if stderr is not None else ""
+        
+    except Exception as e:
+        print("Exception:", str(e))
+        stdout = ""
+        stderr = ""
+
 
     # # Print the output and error messages
-    # print("Output:")
-    # print(stdout)
 
     expected_output = """Please enter your name:
 Hello John Doe!
@@ -46,7 +54,11 @@ Who was your favorite speaker at the last General Conference?
 I agree. Elder Holland was great! I'm just glad they didn't make Java against the Word of Wisdom!!!
 """
     
-    if(stdout == expected_output):
+    stdout_lines = stdout.splitlines()
+    expected_output_lines = expected_output.splitlines()
+
+
+    if(stdout_lines == expected_output_lines):
         print("Well done!")
         remove_main("Main.class")
     else:
